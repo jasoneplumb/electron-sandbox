@@ -1,0 +1,29 @@
+{
+  "name": "electron-sandbox",
+  "version": "1.0.0",
+  "description": "HTML5 application framework",
+  "main": "main.js",
+  "scripts": {
+    "start": "npx electron .\\main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasoneplumb/electron-sandbox.git"
+  },
+  "keywords": [
+    "electron",
+    "html",
+    "node",
+    "javascript",
+    "framework"
+  ],
+  "author": "jasoneplumb",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jasoneplumb/electron-sandbox/issues"
+  },
+  "homepage": "https://github.com/jasoneplumb/electron-sandbox#readme",
+  "devDependencies": {
+    "electron": "^27.0.2"
+  }
+}
