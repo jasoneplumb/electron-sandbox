@@ -18,18 +18,51 @@ under the License.
 ***********************************************************/
 // File: ./main.js
 // https://www.electronjs.org/docs/latest/tutorial/process-model
-/* jshint esversion:8, node:true, -W033, -W014 */// 033 Missing semicolon, 014 Permissive line breaks
 'use strict'
+/* jshint esversion:6, node:true, -W033, -W014 */// 033 Missing semicolon, 014 Permissive line breaks
+
 const electron = require('electron')
+
+let windowBounds = {x: 0, y: 0, width: 600, height: 400}
 electron.app.whenReady().then(() => {
-  const win = new electron.BrowserWindow({ 
+  let windowDisplay = electron.screen.getDisplayNearestPoint({x: windowBounds.x + windowBounds.width/2, y: windowBounds.y + windowBounds.height/2})
+  const window = new electron.BrowserWindow({
+    show: false, 
+    frame: true, // show the window frame (e.g. title bar, boarders)
+    x: windowBounds.x, 
+    y: windowBounds.y, 
+    width: windowBounds.width, 
+    height: windowBounds.height, 
     nodeIntegration: true, 
     contextIsolation: true, // protect against prototype pollution
     show: false, 
+    autoHideMenuBar: false, 
   })
-  win.once('ready-to-show', () => {
-    win.show()
-    win.focus()
+  function DisplayChanged(newBounds) {
+    const newCenter = {x: newBounds.x + newBounds.width/2, y: newBounds.y + newBounds.height/2}
+    const display = electron.screen.getDisplayNearestPoint(newCenter)
+    if (display.id !== windowDisplay.id) {
+      windowDisplay = display
+      window.zoomFactor = 1 / windowDisplay.scaleFactor
+      return true
+    }
+    return false
+  }
+  let priorHeight = 0
+  function handleResize() {
+    const height = window.getContentBounds().height * windowDisplay.scaleFactor
+    if (height != priorHeight) {
+      console.log('Window content height changed to ' + height + 'px')
+      priorHeight = height
+    }
+  }
+  window.on('resize', () => { DisplayChanged( window.getBounds() ); handleResize() })
+  window.on('move', () => { if (DisplayChanged( window.getBounds() )) handleResize() })
+  window.on('maximize', () => handleResize())
+  window.on('unmaximize', () => handleResize())
+  window.once('ready-to-show', () => {
+    window.show()
   })  
-  win.loadURL('https://electronjs.org')
+  handleResize()
+  window.loadURL('https://electronjs.org')
 })
