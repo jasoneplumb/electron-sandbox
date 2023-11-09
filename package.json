@@ -25,5 +25,8 @@
   "homepage": "https://github.com/jasoneplumb/electron-sandbox#readme",
   "devDependencies": {
     "electron": "^27.0.2"
+  },
+  "dependencies": {
+    "path": "^0.12.7"
   }
 }

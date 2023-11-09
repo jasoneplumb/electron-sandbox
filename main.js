@@ -17,52 +17,72 @@ specific language governing permissions and limitations
 under the License.
 ***********************************************************/
 // File: ./main.js
-// https://www.electronjs.org/docs/latest/tutorial/process-model
-'use strict'
 /* jshint esversion:6, node:true, -W033, -W014 */// 033 Missing semicolon, 014 Permissive line breaks
+'use strict'
+// https://www.electronjs.org/docs/latest/tutorial/process-model
+// This main process uses a custom (window.ipc) API to send/receive messages to/from 
+// the render process using channels specified in preload.js.
+// This file loads the render process code indirectly from index.html 
 
 const electron = require('electron')
+const path = require('path')
 
 let windowBounds = {x: 0, y: 0, width: 600, height: 400}
+let display = undefined 
+let window = undefined 
+
+electron.app.allowRenderProcessReuse = false
+electron.app.on('window-all-closed', () => electron.app.quit())
+electron.app.on('before-quit', () => {})
 electron.app.whenReady().then(() => {
-  let windowDisplay = electron.screen.getDisplayNearestPoint({x: windowBounds.x + windowBounds.width/2, y: windowBounds.y + windowBounds.height/2})
-  const window = new electron.BrowserWindow({
-    show: false, 
-    frame: true, // show the window frame (e.g. title bar, boarders)
+  display = electron.screen.getDisplayNearestPoint({x: windowBounds.x + windowBounds.width/2, y: windowBounds.y + windowBounds.height/2})
+  window = new electron.BrowserWindow({
     x: windowBounds.x, 
     y: windowBounds.y, 
     width: windowBounds.width, 
-    height: windowBounds.height, 
-    nodeIntegration: true, 
-    contextIsolation: true, // protect against prototype pollution
-    show: false, 
+    height: windowBounds.height,
+
+    frame: true,
     autoHideMenuBar: false, 
+    webPreferences: {
+      webSecurity: true,
+      allowEval: false, 
+      contextIsolation: true,
+      enableRemoteModule: false, 
+      preload: path.join(__dirname, 'preload.js'),
+    },  
+    show: true, 
   })
-  function DisplayChanged(newBounds) {
-    const newCenter = {x: newBounds.x + newBounds.width/2, y: newBounds.y + newBounds.height/2}
-    const display = electron.screen.getDisplayNearestPoint(newCenter)
-    if (display.id !== windowDisplay.id) {
-      windowDisplay = display
-      window.zoomFactor = 1 / windowDisplay.scaleFactor
-      return true
-    }
-    return false
+  function displayChanged(newBounds) {
+    let result = false
+    let newCenter = {x: newBounds.x + newBounds.width/2, y: newBounds.y + newBounds.height/2}
+    let current = electron.screen.getDisplayNearestPoint(newCenter)
+    if (current.id !== display.id) {
+      display = current
+      result = true
+    } 
+    return result
   }
-  let priorHeight = 0
-  function handleResize() {
-    const height = window.getContentBounds().height * windowDisplay.scaleFactor
-    if (height != priorHeight) {
-      console.log('Window content height changed to ' + height + 'px')
-      priorHeight = height
+
+  // Load the window contents
+  window.webContents.on('did-finish-load', () => {
+    let priorContentHeight = 0
+    function handleResize(scaleFactor = display.scaleFactor) {
+      let contentHeight = window.getContentBounds().height * scaleFactor
+      if (contentHeight != priorContentHeight) {
+        console.log('contentHeight: ' + contentHeight + 'px' + ', scaleFactor: ' + scaleFactor)
+        priorContentHeight = contentHeight
+        window.webContents.send('height', contentHeight)
+      }
     }
-  }
-  window.on('resize', () => { DisplayChanged( window.getBounds() ); handleResize() })
-  window.on('move', () => { if (DisplayChanged( window.getBounds() )) handleResize() })
-  window.on('maximize', () => handleResize())
-  window.on('unmaximize', () => handleResize())
-  window.once('ready-to-show', () => {
-    window.show()
-  })  
-  handleResize()
-  window.loadURL('https://electronjs.org')
+    handleResize() // call it once to see the first appearance
+    electron.screen.on('display-metrics-changed', (event, changedDisplay, changedMetrics) => {
+      if (changedDisplay.id == display.id && changedMetrics.includes('scaleFactor')) {
+        handleResize(changedDisplay.scaleFactor)
+      }
+    })
+    window.on('resize', () => { displayChanged( window.getBounds() ); handleResize() })
+    window.on('move', () => { if (displayChanged( window.getBounds() )) handleResize() })
+  })
+  window.loadFile('./index.html')
 })

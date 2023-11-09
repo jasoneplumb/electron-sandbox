@@ -1,0 +1,13 @@
+#canvas {
+    background-color: rgb(0, 0, 0);
+    width:  100%;
+}
+html, body, canvas {
+    zoom: unset;
+    user-select: none;
+    color: black;
+    background-color: darkgrey;
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    overflow-y: hidden;
+}
