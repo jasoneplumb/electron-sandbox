@@ -71,7 +71,7 @@ electron.app.whenReady().then(() => {
     }
     let priorContentHeight = 0
     let priorContentWidth = 0
-    const osVersion = os.version()
+    const buildNumber = os.release().replace('10.0.', '')
     function handleResize(scaleFactor = display.scaleFactor) {
       let contentHeight = Math.round(window.getContentBounds().height * scaleFactor)
       let contentWidth = Math.round(window.getContentBounds().width * scaleFactor)
@@ -83,7 +83,7 @@ electron.app.whenReady().then(() => {
           "contentHeight": contentHeight,
           "contentWidth": contentWidth, 
           "scaleFactor": scaleFactor, 
-          "osVersion": osVersion, 
+          "buildNumber": buildNumber, 
         }
         window.webContents.send('newContentBounds', obj)
       }

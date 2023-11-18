@@ -30,7 +30,7 @@ window.ipc.receive('newContentBounds', (obj) => {
   const SPLIT = 0.25
   const PAD = 24
   let FACTOR = 1.24
-  if (obj.osVersion.includes('Windows 10')) FACTOR = 1.315
+  if (obj.buildNumber < 22000) FACTOR = 1.315
   document.body.innerHTML = ''
     + '<canvas id="canvas" width=' + obj.contentWidth * FACTOR / obj.scaleFactor
     + ' height=' + (obj.contentHeight*(1-SPLIT)) * FACTOR / obj.scaleFactor + '></canvas>'
