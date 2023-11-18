@@ -1,8 +1,23 @@
+.header {
+    background-color: darkgrey;
+}
+.table {
+    overflow-x: auto;
+    overflow-y: auto;
+}
+th {
+    text-align: right;
+    background-color: darkgrey;
+    position: sticky;
+    top: 0; /* This is required for table header visibility when scrolling through data */
+}
+td {
+    text-align: right;
+}
 #canvas {
     background-color: rgb(0, 0, 0);
-    width:  100%;
 }
-html, body, canvas {
+body, canvas, html, table {
     zoom: unset;
     user-select: none;
     color: black;

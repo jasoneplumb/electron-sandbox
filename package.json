@@ -1,6 +1,6 @@
 {
   "name": "electron-sandbox",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "HTML5 application framework",
   "main": "main.js",
   "scripts": {
@@ -27,6 +27,7 @@
     "electron": "^27.0.2"
   },
   "dependencies": {
+    "os": "^0.1.2",
     "path": "^0.12.7"
   }
 }

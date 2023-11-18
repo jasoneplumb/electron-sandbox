@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld('ipc', {
   // Send to the main process
   send: (channel, data) => {
     const validChannels = [
-      'show',
+      '<tbd>',
     ]
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, data)
@@ -38,7 +38,7 @@ contextBridge.exposeInMainWorld('ipc', {
   // Receive from the main process
   receive: (channel, func) => {
     const validChannels = [
-      'height',
+      'newContentBounds',
     ]
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => func(...args)) // strip event as it includes `sender` 

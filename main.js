@@ -26,8 +26,9 @@ under the License.
 
 const electron = require('electron')
 const path = require('path')
+const os = require('os')
 
-let windowBounds = {x: 0, y: 0, width: 600, height: 400}
+let windowBounds = {x: 65, y: 40, width: 650, height: 400}
 let display = undefined 
 let window = undefined 
 
@@ -41,7 +42,8 @@ electron.app.whenReady().then(() => {
     y: windowBounds.y, 
     width: windowBounds.width, 
     height: windowBounds.height,
-
+    fullscreenable: false, // ensure title bar (version info) is always visible
+    fullscreen: false, 
     frame: true,
     autoHideMenuBar: false, 
     webPreferences: {
@@ -50,32 +52,45 @@ electron.app.whenReady().then(() => {
       contextIsolation: true,
       enableRemoteModule: false, 
       preload: path.join(__dirname, 'preload.js'),
+      zoomFactor: 1, 
     },  
     show: true, 
   })
-  function displayChanged(newBounds) {
-    let result = false
-    let newCenter = {x: newBounds.x + newBounds.width/2, y: newBounds.y + newBounds.height/2}
-    let current = electron.screen.getDisplayNearestPoint(newCenter)
-    if (current.id !== display.id) {
-      display = current
-      result = true
-    } 
-    return result
-  }
 
   // Load the window contents
   window.webContents.on('did-finish-load', () => {
+    function displayChanged(newBounds) {
+      let result = false
+      let newCenter = {x: newBounds.x + newBounds.width/2, y: newBounds.y + newBounds.height/2}
+      let current = electron.screen.getDisplayNearestPoint(newCenter)
+      if (current.id !== display.id) {
+        display = current
+        result = true
+      } 
+      return result
+    }
     let priorContentHeight = 0
+    let priorContentWidth = 0
+    const osVersion = os.version()
     function handleResize(scaleFactor = display.scaleFactor) {
-      let contentHeight = window.getContentBounds().height * scaleFactor
-      if (contentHeight != priorContentHeight) {
-        console.log('contentHeight: ' + contentHeight + 'px' + ', scaleFactor: ' + scaleFactor)
+      let contentHeight = Math.round(window.getContentBounds().height * scaleFactor)
+      let contentWidth = Math.round(window.getContentBounds().width * scaleFactor)
+      if (contentHeight != priorContentHeight || contentWidth != priorContentWidth) {
+        console.log(contentWidth + 'x' + contentHeight + 'px' + ', scaleFactor: ' + scaleFactor)
         priorContentHeight = contentHeight
-        window.webContents.send('height', contentHeight)
+        priorContentWidth = contentWidth
+        let obj = {
+          "contentHeight": contentHeight,
+          "contentWidth": contentWidth, 
+          "scaleFactor": scaleFactor, 
+          "osVersion": osVersion, 
+        }
+        window.webContents.send('newContentBounds', obj)
       }
     }
-    handleResize() // call it once to see the first appearance
+
+    // Set the initial conditions and then set the callbacks needed to handle multi-display
+    handleResize()
     electron.screen.on('display-metrics-changed', (event, changedDisplay, changedMetrics) => {
       if (changedDisplay.id == display.id && changedMetrics.includes('scaleFactor')) {
         handleResize(changedDisplay.scaleFactor)
