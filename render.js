@@ -25,17 +25,24 @@ under the License.
 // This file is included by index.html directly.
 console.log('Loading render.js')
 
+let shown = false
 window.ipc.receive('newContentBounds', (obj) => {
   console.log(obj.contentWidth + 'x' + obj.contentHeight + 'px')
-  const SPLIT = 0.25
+  const SPLIT = 0.5
   const PAD = 24
   let FACTOR = 1.24
   if (obj.buildNumber < 22000) FACTOR = 1.315
+  const SCALED_WIDTH = Math.round(obj.contentWidth * FACTOR / obj.scaleFactor)
   document.body.innerHTML = ''
-    + '<canvas id="canvas" width=' + obj.contentWidth * FACTOR / obj.scaleFactor
-    + ' height=' + (obj.contentHeight*(1-SPLIT)) * FACTOR / obj.scaleFactor + '></canvas>'
-    + '<div class="table" id="data_table" style="height:' + ((obj.contentHeight * SPLIT) * FACTOR / obj.scaleFactor - PAD) + 'px"></div>'
-    + '<div id="status_bar" style="margin-left:' + PAD/5 + 'px">' 
+    + '<canvas id="canvas" width=' + SCALED_WIDTH
+    + ' height=' + Math.round((obj.contentHeight*(1-SPLIT)) * FACTOR / obj.scaleFactor) + '></canvas>'
+    + '<div class="table" id="data_table" style="height:' + Math.round(((obj.contentHeight * SPLIT) * FACTOR / obj.scaleFactor - PAD)) + 'px"></div>'
+    + '<div id="status_bar" style="margin-left:' + Math.round(PAD/5) + 'px">' 
     + obj.contentWidth + 'x' + obj.contentHeight + 'px' + ', scaleFactor: ' + obj.scaleFactor
     + '</div>'
+  if (!shown) {
+    window.ipc.send('show')
+    console.log('show')
+    shown = true
+  }
 })

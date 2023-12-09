@@ -54,11 +54,12 @@ electron.app.whenReady().then(() => {
       preload: path.join(__dirname, 'preload.js'),
       zoomFactor: 1, 
     },  
-    show: true, 
+    show: false, 
   })
-
   // Load the window contents
   window.webContents.on('did-finish-load', () => {
+    function handleShow(event, obj) { window.show() }
+    electron.ipcMain.on('show', handleShow)
     function displayChanged(newBounds) {
       let result = false
       let newCenter = {x: newBounds.x + newBounds.width/2, y: newBounds.y + newBounds.height/2}
@@ -88,16 +89,33 @@ electron.app.whenReady().then(() => {
         window.webContents.send('newContentBounds', obj)
       }
     }
-
-    // Set the initial conditions and then set the callbacks needed to handle multi-display
-    handleResize()
     electron.screen.on('display-metrics-changed', (event, changedDisplay, changedMetrics) => {
       if (changedDisplay.id == display.id && changedMetrics.includes('scaleFactor')) {
         handleResize(changedDisplay.scaleFactor)
       }
     })
-    window.on('resize', () => { displayChanged( window.getBounds() ); handleResize() })
-    window.on('move', () => { if (displayChanged( window.getBounds() )) handleResize() })
+    window.on('resize', () => { 
+      displayChanged( window.getBounds() )
+      function debounce(func, wait, immediate) {
+        var timeout
+        return function() {
+          var context = this
+          var args = arguments
+          var callNow = immediate && !timeout
+          clearTimeout(timeout)
+          timeout = setTimeout(function() {
+            timeout = null
+            if (!immediate) {
+              func.apply(context, args)
+            }
+          }, wait)
+          if (callNow) func.apply(context, args)
+        }
+      }
+      var debouncedHandleResize = debounce(handleResize, 150)
+      debouncedHandleResize()
+    })
+    handleResize() // seed call to get things going
   })
   window.loadFile('./index.html')
 })
