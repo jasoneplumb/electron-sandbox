@@ -24,48 +24,29 @@ under the License.
 // to/from the render process using channels specified in preload.js.
 // This file loads the render process code indirectly from index.html 
 
+console.log('Loading main.js')
+
 const electron = require('electron')
 const path = require('path')
 const os = require('os')
 
-let gWindowBounds = {x: 65, y: 40, width: 650, height: 400}
-let gDisplay = undefined // the display which contains a majority of the application window
-let gWindow = undefined // the application window itself
+let gDisplay = undefined
+let gWindow = undefined
 
-electron.app.allowRenderProcessReuse = false
 electron.app.on('window-all-closed', () => electron.app.quit())
-electron.app.on('before-quit', () => {})
 electron.app.whenReady().then(() => {
-  gDisplay = electron.screen.getDisplayNearestPoint({x: gWindowBounds.x + gWindowBounds.width/2, y: gWindowBounds.y + gWindowBounds.height/2})
-  gWindow= new electron.BrowserWindow({
-    x: gWindowBounds.x, 
-    y: gWindowBounds.y, 
-    width: gWindowBounds.width, 
-    height: gWindowBounds.height,
-    fullscreenable: false, // ensure title bar (version info) is always visible
-    fullscreen: false, 
-    frame: true,
-    autoHideMenuBar: false, 
-    webPreferences: {
-      webSecurity: true,
-      allowEval: false, 
-      contextIsolation: true,
-      enableRemoteModule: false, 
-      preload: path.join(__dirname, 'preload.js'),
-      zoomFactor: 1, 
-    },  
+  gDisplay = electron.screen.getPrimaryDisplay()
+  gWindow = new electron.BrowserWindow({
+    fullscreenable: false, // Ensure the title bar is always visible
+    webPreferences: { preload: path.join(__dirname, 'preload.js') }, 
     show: false, 
   })
-
-  // Setup the handler and load the window contents
-
+  gWindow.maximize()
   gWindow.webContents.on('did-finish-load', () => {
-    // setup the show window handler (see 'show: false,' above)...
     function handleShow(event, obj) { 
       console.log('main received (show) message from render')
       gWindow.show() 
     }
-    // ...to call the window show() function when the render sends a 'show' message
     electron.ipcMain.on('show', handleShow)
 
     let priorContentHeight = 0
