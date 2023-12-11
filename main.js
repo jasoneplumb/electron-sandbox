@@ -20,28 +20,28 @@ under the License.
 /* jshint esversion:6, node:true, -W033, -W014 */// 033 Missing semicolon, 014 Permissive line breaks
 'use strict'
 // https://www.electronjs.org/docs/latest/tutorial/process-model
-// This main process uses a custom (window.ipc) API to send/receive messages to/from 
-// the render process using channels specified in preload.js.
+// This main process uses a application specific API to send/receive messages  
+// to/from the render process using channels specified in preload.js.
 // This file loads the render process code indirectly from index.html 
 
 const electron = require('electron')
 const path = require('path')
 const os = require('os')
 
-let windowBounds = {x: 65, y: 40, width: 650, height: 400}
-let display = undefined 
-let window = undefined 
+let gWindowBounds = {x: 65, y: 40, width: 650, height: 400}
+let gDisplay = undefined // the display which contains a majority of the application window
+let gWindow = undefined // the application window itself
 
 electron.app.allowRenderProcessReuse = false
 electron.app.on('window-all-closed', () => electron.app.quit())
 electron.app.on('before-quit', () => {})
 electron.app.whenReady().then(() => {
-  display = electron.screen.getDisplayNearestPoint({x: windowBounds.x + windowBounds.width/2, y: windowBounds.y + windowBounds.height/2})
-  window = new electron.BrowserWindow({
-    x: windowBounds.x, 
-    y: windowBounds.y, 
-    width: windowBounds.width, 
-    height: windowBounds.height,
+  gDisplay = electron.screen.getDisplayNearestPoint({x: gWindowBounds.x + gWindowBounds.width/2, y: gWindowBounds.y + gWindowBounds.height/2})
+  gWindow= new electron.BrowserWindow({
+    x: gWindowBounds.x, 
+    y: gWindowBounds.y, 
+    width: gWindowBounds.width, 
+    height: gWindowBounds.height,
     fullscreenable: false, // ensure title bar (version info) is always visible
     fullscreen: false, 
     frame: true,
@@ -56,66 +56,66 @@ electron.app.whenReady().then(() => {
     },  
     show: false, 
   })
-  // Load the window contents
-  window.webContents.on('did-finish-load', () => {
-    function handleShow(event, obj) { window.show() }
-    electron.ipcMain.on('show', handleShow)
-    function displayChanged(newBounds) {
-      let result = false
-      let newCenter = {x: newBounds.x + newBounds.width/2, y: newBounds.y + newBounds.height/2}
-      let current = electron.screen.getDisplayNearestPoint(newCenter)
-      if (current.id !== display.id) {
-        display = current
-        result = true
-      } 
-      return result
+
+  // Setup the handler and load the window contents
+
+  gWindow.webContents.on('did-finish-load', () => {
+    // setup the show window handler (see 'show: false,' above)...
+    function handleShow(event, obj) { 
+      console.log('main received (show) message from render')
+      gWindow.show() 
     }
+    // ...to call the window show() function when the render sends a 'show' message
+    electron.ipcMain.on('show', handleShow)
+
     let priorContentHeight = 0
     let priorContentWidth = 0
-    const buildNumber = os.release().replace('10.0.', '')
-    function handleResize(scaleFactor = display.scaleFactor) {
-      let contentHeight = Math.round(window.getContentBounds().height * scaleFactor)
-      let contentWidth = Math.round(window.getContentBounds().width * scaleFactor)
-      if (contentHeight != priorContentHeight || contentWidth != priorContentWidth) {
-        console.log(contentWidth + 'x' + contentHeight + 'px' + ', scaleFactor: ' + scaleFactor)
-        priorContentHeight = contentHeight
-        priorContentWidth = contentWidth
-        let obj = {
-          "contentHeight": contentHeight,
-          "contentWidth": contentWidth, 
-          "scaleFactor": scaleFactor, 
-          "buildNumber": buildNumber, 
-        }
-        window.webContents.send('newContentBounds', obj)
-      }
-    }
-    electron.screen.on('display-metrics-changed', (event, changedDisplay, changedMetrics) => {
-      if (changedDisplay.id == display.id && changedMetrics.includes('scaleFactor')) {
-        handleResize(changedDisplay.scaleFactor)
-      }
-    })
-    window.on('resize', () => { 
-      displayChanged( window.getBounds() )
-      function debounce(func, wait, immediate) {
+    const BUILD_NUMBER = os.release().replace('10.0.', '')
+    function resize() { 
+      let bounds = gWindow.getBounds()
+      let center = {x: bounds.x + bounds.width/2, y: bounds.y + bounds.height/2}
+      let display = electron.screen.getDisplayNearestPoint(center)
+      if (display.id !== gDisplay.id) gDisplay = display
+
+      function debounce(func, max_period_ms) {
         var timeout
         return function() {
-          var context = this
-          var args = arguments
-          var callNow = immediate && !timeout
           clearTimeout(timeout)
           timeout = setTimeout(function() {
             timeout = null
-            if (!immediate) {
-              func.apply(context, args)
-            }
-          }, wait)
-          if (callNow) func.apply(context, args)
+            func.apply(this, arguments)
+          }, max_period_ms)
         }
       }
-      var debouncedHandleResize = debounce(handleResize, 150)
+      var debouncedHandleResize = debounce(() => {
+        const SCALE_FACTOR = gDisplay.scaleFactor
+        const BOUNDS = gWindow.getContentBounds()
+        const HEIGHT = Math.round(BOUNDS.height * SCALE_FACTOR)
+        const WIDTH = Math.round(BOUNDS.width * SCALE_FACTOR)
+        if (HEIGHT != priorContentHeight || WIDTH != priorContentWidth) {
+          priorContentHeight = HEIGHT
+          priorContentWidth = WIDTH
+          let obj = {
+            "buildNumber": BUILD_NUMBER, 
+            "contentHeight": HEIGHT,
+            "contentWidth": WIDTH, 
+            "scaleFactor": SCALE_FACTOR, 
+          }
+          gWindow.webContents.send('changeShape', obj)
+          console.log('main sent a (changeShape) message to render: ' + 
+            WIDTH + 'x' + HEIGHT + 'px' + ', scaleFactor: ' + SCALE_FACTOR)
+        }
+      }, 750)
+      // To limit the (IPC) call rate,
+      // this handler calls debounceHandleResize instead.
       debouncedHandleResize()
+    }
+    electron.screen.on('display-metrics-changed', (event, display, metrics) => {
+      if (display.id == gDisplay.id && metrics.includes('scaleFactor')) resize()
     })
-    handleResize() // seed call to get things going
+    gWindow.on('resize', resize )
+    resize() // call it explicitly once
   })
-  window.loadFile('./index.html')
+
+  gWindow.loadFile('./index.html')
 })

@@ -1,6 +1,6 @@
 {
   "name": "electron-sandbox",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "HTML5 application framework",
   "main": "main.js",
   "scripts": {
@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/jasoneplumb/electron-sandbox#readme",
   "devDependencies": {
-    "electron": "^27.0.2"
+    "electron": "^28.0.0"
   },
   "dependencies": {
     "os": "^0.1.2",

@@ -38,7 +38,7 @@ contextBridge.exposeInMainWorld('ipc', {
   // Receive from the main process
   receive: (channel, func) => {
     const validChannels = [
-      'newContentBounds',
+      'changeShape',
     ]
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => func(...args)) // strip event as it includes `sender` 
@@ -51,7 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const element = document.getElementById(selector)
     if (element) element.innerText = text
   }
-  for (const type of ['chrome', 'node', 'electron']) {
+  for (const type of ['electron', 'node', 'chrome']) {
     replaceText(`${type}-version`, process.versions[type])
     console.log( type + ' ' + process.versions[type] )
   }

@@ -17,17 +17,18 @@ specific language governing permissions and limitations
 under the License.
 ***********************************************************/// render.js
 // File: ./render.js
-/* jshint esversion:6, node:true, -W033, -W014 */// 033 Missing semicolon, 014 Permissive line breaks
+/* jshint esversion: 6, node: true, -W033, -W014 */// Missing semicolon, Permissive line breaks
 
 // https://www.electronjs.org/docs/latest/tutorial/process-model
-// This render process uses a custom (window.ipc) API to send/receive messages to/from 
-// the main process using channels specified in preload.js.
+// This render process uses an application specific API (window.ipc) 
+// to send/receive messages to/from the main process using channels specified in preload.js.
 // This file is included by index.html directly.
 console.log('Loading render.js')
 
 let shown = false
-window.ipc.receive('newContentBounds', (obj) => {
-  console.log(obj.contentWidth + 'x' + obj.contentHeight + 'px')
+window.ipc.receive('changeShape', (obj) => {
+  console.log('render received a (changeShape) message from main (' 
+    + obj.contentWidth + 'x' + obj.contentHeight + 'px)')
   const SPLIT = 0.5
   const PAD = 24
   let FACTOR = 1.24
@@ -42,7 +43,7 @@ window.ipc.receive('newContentBounds', (obj) => {
     + '</div>'
   if (!shown) {
     window.ipc.send('show')
-    console.log('show')
+    console.log('render sent (show) message to main')
     shown = true
   }
 })
