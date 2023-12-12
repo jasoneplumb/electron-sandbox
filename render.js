@@ -31,15 +31,13 @@ window.ipc.receive('changeShape', (obj) => {
     + obj.contentWidth + 'x' + obj.contentHeight + 'px)')
   const SPLIT = 0.5
   const PAD = 24
-  let FACTOR = 1.24
-  if (obj.buildNumber < 22000) FACTOR = 1.315
-  const SCALED_WIDTH = Math.round(obj.contentWidth * FACTOR / obj.scaleFactor)
+  const SCALED_WIDTH = Math.round(obj.contentWidth * obj.osScaleFactor / obj.userScaleFactor)
+  const SCALED_HEIGHT = Math.round((obj.contentHeight*(1-SPLIT)) * obj.osScaleFactor / obj.userScaleFactor)
   document.body.innerHTML = ''
-    + '<canvas id="canvas" width=' + SCALED_WIDTH
-    + ' height=' + Math.round((obj.contentHeight*(1-SPLIT)) * FACTOR / obj.scaleFactor) + '></canvas>'
-    + '<div class="table" id="data_table" style="height:' + Math.round(((obj.contentHeight * SPLIT) * FACTOR / obj.scaleFactor - PAD)) + 'px"></div>'
+    + '<canvas id="canvas" width=' + SCALED_WIDTH + ' height=' + SCALED_HEIGHT + '></canvas>'
+    + '<div class="table" id="data_table" style="height:' + Math.round(((obj.contentHeight * SPLIT) * obj.osScaleFactor / obj.userScaleFactor - PAD)) + 'px"></div>'
     + '<div id="status_bar" style="margin-left:' + Math.round(PAD/5) + 'px">' 
-    + obj.contentWidth + 'x' + obj.contentHeight + 'px' + ', scaleFactor: ' + obj.scaleFactor
+    + obj.contentWidth + 'x' + obj.contentHeight + 'px' + ', userScaleFactor: ' + obj.userScaleFactor
     + '</div>'
   if (!shown) {
     window.ipc.send('show')

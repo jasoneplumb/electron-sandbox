@@ -38,8 +38,9 @@ electron.app.whenReady().then(() => {
   gDisplay = electron.screen.getPrimaryDisplay()
   gWindow = new electron.BrowserWindow({
     fullscreenable: false, // Ensure the title bar is always visible
-    webPreferences: { preload: path.join(__dirname, 'preload.js') }, 
+    minHeight: 100, 
     show: false, 
+    webPreferences: { preload: path.join(__dirname, 'preload.js') }, 
   })
   gWindow.maximize()
   gWindow.webContents.on('did-finish-load', () => {
@@ -51,7 +52,6 @@ electron.app.whenReady().then(() => {
 
     let priorContentHeight = 0
     let priorContentWidth = 0
-    const BUILD_NUMBER = os.release().replace('10.0.', '')
     function resize() { 
       let bounds = gWindow.getBounds()
       let center = {x: bounds.x + bounds.width/2, y: bounds.y + bounds.height/2}
@@ -69,26 +69,27 @@ electron.app.whenReady().then(() => {
         }
       }
       var debouncedHandleResize = debounce(() => {
-        const SCALE_FACTOR = gDisplay.scaleFactor
+        const USER_SCALE_FACTOR = gDisplay.scaleFactor
         const BOUNDS = gWindow.getContentBounds()
-        const HEIGHT = Math.round(BOUNDS.height * SCALE_FACTOR)
-        const WIDTH = Math.round(BOUNDS.width * SCALE_FACTOR)
+        const HEIGHT = Math.round(BOUNDS.height * USER_SCALE_FACTOR)
+        const WIDTH = Math.round(BOUNDS.width * USER_SCALE_FACTOR)
         if (HEIGHT != priorContentHeight || WIDTH != priorContentWidth) {
           priorContentHeight = HEIGHT
           priorContentWidth = WIDTH
+          const BUILD_NUMBER = os.release().replace('10.0.', '')
+          const OS_SCALE_FACTOR = (BUILD_NUMBER < 22000) ? 1.315 : 1.24
           let obj = {
-            "buildNumber": BUILD_NUMBER, 
             "contentHeight": HEIGHT,
             "contentWidth": WIDTH, 
-            "scaleFactor": SCALE_FACTOR, 
+            "osScaleFactor": OS_SCALE_FACTOR, 
+            "userScaleFactor": USER_SCALE_FACTOR, 
           }
           gWindow.webContents.send('changeShape', obj)
           console.log('main sent a (changeShape) message to render: ' + 
-            WIDTH + 'x' + HEIGHT + 'px' + ', scaleFactor: ' + SCALE_FACTOR)
+            WIDTH + 'x' + HEIGHT + 'px' + ', userScaleFactor: ' + USER_SCALE_FACTOR)
         }
       }, 750)
-      // To limit the (IPC) call rate,
-      // this handler calls debounceHandleResize instead.
+
       debouncedHandleResize()
     }
     electron.screen.on('display-metrics-changed', (event, display, metrics) => {
