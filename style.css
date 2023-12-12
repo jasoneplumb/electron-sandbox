@@ -4,6 +4,7 @@
 .table {
     overflow-x: auto;
     overflow-y: auto;
+    background-color: rgb(100, 100, 100);
 }
 th {
     text-align: right;
