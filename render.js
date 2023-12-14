@@ -30,15 +30,14 @@ window.ipc.receive('changeShape', (obj) => {
   console.log('render received a (changeShape) message from main (' 
     + obj.contentWidth + 'x' + obj.contentHeight + 'px)')
   const SPLIT = 0.5
-  const PAD = 24
-  const SCALED_WIDTH = Math.round(obj.contentWidth * obj.osScaleFactor / obj.userScaleFactor)
-  const SCALED_HEIGHT = Math.round((obj.contentHeight*(1-SPLIT)) * obj.osScaleFactor / obj.userScaleFactor)
+  const PAD = 28
+  const SCALED_WIDTH  = Math.round(obj.contentWidth  * obj.osScaleFactor)
+  const SCALED_HEIGHT = Math.round(obj.contentHeight * obj.osScaleFactor * (1-SPLIT))
+  const TABLE_HEIGHT  = Math.round(obj.contentHeight * obj.osScaleFactor * SPLIT) - PAD
   document.body.innerHTML = ''
     + '<canvas id="canvas" width=' + SCALED_WIDTH + ' height=' + SCALED_HEIGHT + '></canvas>'
-    + '<div class="table" id="data_table" style="height:' + Math.round(((obj.contentHeight * SPLIT) * obj.osScaleFactor / obj.userScaleFactor - PAD)) + 'px"></div>'
-    + '<div id="status_bar" style="margin-left:' + Math.round(PAD/5) + 'px">' 
-    + obj.contentWidth + 'x' + obj.contentHeight + 'px' + ', userScaleFactor: ' + obj.userScaleFactor
-    + '</div>'
+    + '<div class="table" id="data_table" style="height:' + TABLE_HEIGHT + 'px"></div>'
+    + '<div id="status_bar" style="margin-left:4px">width = ' + Math.round(obj.contentWidth) + '</div>'
   if (!shown) {
     window.ipc.send('show')
     console.log('render sent (show) message to main')

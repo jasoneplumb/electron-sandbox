@@ -71,8 +71,10 @@ electron.app.whenReady().then(() => {
       var debouncedHandleResize = debounce(() => {
         const USER_SCALE_FACTOR = gDisplay.scaleFactor
         const BOUNDS = gWindow.getContentBounds()
-        const HEIGHT = Math.round(BOUNDS.height * USER_SCALE_FACTOR)
-        const WIDTH = Math.round(BOUNDS.width * USER_SCALE_FACTOR)
+//        const HEIGHT = Math.round(BOUNDS.height * USER_SCALE_FACTOR)
+//        const WIDTH = Math.round(BOUNDS.width * USER_SCALE_FACTOR)
+        const HEIGHT = BOUNDS.height
+        const WIDTH =BOUNDS.width
         if (HEIGHT != priorContentHeight || WIDTH != priorContentWidth) {
           priorContentHeight = HEIGHT
           priorContentWidth = WIDTH
@@ -99,5 +101,44 @@ electron.app.whenReady().then(() => {
     resize() // call it explicitly once
   })
 
+  let devToolsVisible = 0
+  function toggleDevTools(webContents) {
+    devToolsVisible ^= 1
+    if (devToolsVisible) webContents.openDevTools()
+    else webContents.closeDevTools()
+  }
+  // Create a menu template
+  const template = [
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Zoom In',
+          accelerator: 'CmdOrCtrl+Plus',
+          enabled: false, 
+          click: () => {},
+        },
+        {
+          label: 'Zoom Out',
+          accelerator: 'CmdOrCtrl+-',
+          enabled: false, 
+          click: () => {},
+        },
+        {
+          label: 'Developer Tools',
+          accelerator: 'CmdOrCtrl+Shift+i',
+          enabled: true, 
+          click: () => {
+            if (gWindow)  {
+              toggleDevTools(gWindow.webContents)
+            }
+          },
+        },
+      ],
+    },
+  ];
+  const menu = electron.Menu.buildFromTemplate(template);
+  electron.Menu.setApplicationMenu(menu);
+  
   gWindow.loadFile('./index.html')
 })
