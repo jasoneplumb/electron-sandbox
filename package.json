@@ -1,6 +1,6 @@
 {
   "name": "electron-sandbox",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "HTML5 application framework",
   "main": "main.js",
   "scripts": {
@@ -10,24 +10,15 @@
     "type": "git",
     "url": "git+https://github.com/jasoneplumb/electron-sandbox.git"
   },
-  "keywords": [
-    "electron",
-    "html",
-    "node",
-    "javascript",
-    "framework"
-  ],
+  "keywords": [ "electron", "html", "node", "javascript", "framework" ],
   "author": "Jason Edward Plumb",
   "license": "Apache 2.0 License",
-  "bugs": {
-    "url": "https://github.com/jasoneplumb/electron-sandbox/issues"
-  },
+  "bugs": { "url": "https://github.com/jasoneplumb/electron-sandbox/issues" },
   "homepage": "https://github.com/jasoneplumb/electron-sandbox#readme",
   "devDependencies": {
     "electron": "^28.0.0"
   },
   "dependencies": {
-    "os": "^0.1.2",
     "path": "^0.12.7"
   }
 }

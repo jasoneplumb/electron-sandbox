@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld('ipc', {
   // Send to the main process
   send: (channel, data) => {
     const validChannels = [
-      'show',
+      'TBD',
     ]
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, data)

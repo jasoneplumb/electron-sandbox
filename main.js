@@ -18,7 +18,6 @@ under the License.
 ***********************************************************/
 // File: ./main.js
 /* jshint esversion:6, node:true, -W033, -W014 */// 033 Missing semicolon, 014 Permissive line breaks
-'use strict'
 // https://www.electronjs.org/docs/latest/tutorial/process-model
 // This main process uses a application specific API to send/receive messages  
 // to/from the render process using channels specified in preload.js.
@@ -28,7 +27,6 @@ console.log('Loading main.js')
 
 const electron = require('electron')
 const path = require('path')
-const os = require('os')
 
 let gDisplay = undefined
 let gWindow = undefined
@@ -39,19 +37,14 @@ electron.app.whenReady().then(() => {
   gWindow = new electron.BrowserWindow({
     fullscreenable: false, // Ensure the title bar is always visible
     minHeight: 100, 
-    show: false, 
+    show: true, 
     webPreferences: { preload: path.join(__dirname, 'preload.js') }, 
   })
   gWindow.maximize()
   gWindow.webContents.on('did-finish-load', () => {
-    function handleShow(event, obj) { 
-      console.log('main received (show) message from render')
-      gWindow.show() 
-    }
-    electron.ipcMain.on('show', handleShow)
-
-    let priorContentHeight = 0
-    let priorContentWidth = 0
+    let priorHeight = 0
+    let priorWidth = 0
+    let priorDisplayScale = 0
     function resize() { 
       let bounds = gWindow.getBounds()
       let center = {x: bounds.x + bounds.width/2, y: bounds.y + bounds.height/2}
@@ -69,26 +62,21 @@ electron.app.whenReady().then(() => {
         }
       }
       var debouncedHandleResize = debounce(() => {
-        const USER_SCALE_FACTOR = gDisplay.scaleFactor
+        const DISPLAY_SCALE = gDisplay.scaleFactor
         const BOUNDS = gWindow.getContentBounds()
-//        const HEIGHT = Math.round(BOUNDS.height * USER_SCALE_FACTOR)
-//        const WIDTH = Math.round(BOUNDS.width * USER_SCALE_FACTOR)
         const HEIGHT = BOUNDS.height
-        const WIDTH =BOUNDS.width
-        if (HEIGHT != priorContentHeight || WIDTH != priorContentWidth) {
-          priorContentHeight = HEIGHT
-          priorContentWidth = WIDTH
-          const BUILD_NUMBER = os.release().replace('10.0.', '')
-          const OS_SCALE_FACTOR = (BUILD_NUMBER < 22000) ? 1.315 : 1.24
+        const WIDTH = BOUNDS.width
+        if (DISPLAY_SCALE != priorDisplayScale || HEIGHT != priorHeight || WIDTH != priorWidth) {
+          priorHeight = HEIGHT
+          priorWidth = WIDTH
           let obj = {
-            "contentHeight": HEIGHT,
-            "contentWidth": WIDTH, 
-            "osScaleFactor": OS_SCALE_FACTOR, 
-            "userScaleFactor": USER_SCALE_FACTOR, 
+            "height": HEIGHT,
+            "width": WIDTH, 
+            "displayScale": DISPLAY_SCALE, 
           }
           gWindow.webContents.send('changeShape', obj)
-          console.log('main sent a (changeShape) message to render: ' + 
-            WIDTH + 'x' + HEIGHT + 'px' + ', userScaleFactor: ' + USER_SCALE_FACTOR)
+          gWindow.webContents.setZoomFactor(1/DISPLAY_SCALE)
+          console.log('changeShape (' + WIDTH + ', ' + HEIGHT + ', ' + DISPLAY_SCALE + ')')
         }
       }, 750)
 

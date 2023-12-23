@@ -18,29 +18,23 @@ under the License.
 ***********************************************************/// render.js
 // File: ./render.js
 /* jshint esversion: 6, node: true, -W033, -W014 */// Missing semicolon, Permissive line breaks
-
+'use strict'
 // https://www.electronjs.org/docs/latest/tutorial/process-model
 // This render process uses an application specific API (window.ipc) 
 // to send/receive messages to/from the main process using channels specified in preload.js.
 // This file is included by index.html directly.
 console.log('Loading render.js')
 
-let shown = false
 window.ipc.receive('changeShape', (obj) => {
   console.log('render received a (changeShape) message from main (' 
-    + obj.contentWidth + 'x' + obj.contentHeight + 'px)')
+    + obj.width + 'x' + obj.height + 'px)')
   const SPLIT = 0.5
   const PAD = 28
-  const SCALED_WIDTH  = Math.round(obj.contentWidth  * obj.osScaleFactor)
-  const SCALED_HEIGHT = Math.round(obj.contentHeight * obj.osScaleFactor * (1-SPLIT))
-  const TABLE_HEIGHT  = Math.round(obj.contentHeight * obj.osScaleFactor * SPLIT) - PAD
+  const SCALED_WIDTH  = Math.round(obj.width  * obj.displayScale)
+  const SCALED_HEIGHT = Math.round(obj.height * obj.displayScale * (1-SPLIT))
+  const TABLE_HEIGHT  = Math.round(obj.height * obj.displayScale * SPLIT) - PAD
   document.body.innerHTML = ''
     + '<canvas id="canvas" width=' + SCALED_WIDTH + ' height=' + SCALED_HEIGHT + '></canvas>'
     + '<div class="table" id="data_table" style="height:' + TABLE_HEIGHT + 'px"></div>'
-    + '<div id="status_bar" style="margin-left:4px">width = ' + Math.round(obj.contentWidth) + '</div>'
-  if (!shown) {
-    window.ipc.send('show')
-    console.log('render sent (show) message to main')
-    shown = true
-  }
+    + '<div id="status_bar" style="margin-left:4px">width = ' + SCALED_WIDTH + '</div>'
 })
